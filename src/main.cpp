@@ -10,23 +10,26 @@
 // https://github.com/spotify/linux/blob/master/drivers/media/video/ov7670.c
 // https://github.com/torvalds/linux/blob/master/drivers/media/i2c/ov7670.c
 
+#undef EPS
+#include "opencv2/calib3d.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/core.hpp"
+
+//#include "opencv2/objdetect.hpp"
+//#include "opencv2/highgui/highgui.hpp"
+//#include "opencv2/imgproc.hpp"
+#define EPS		192
 
 #include "OV7670.h"
-
 #include <WiFi.h>
 #include <WiFiMulti.h>
 #include <WiFiClient.h>
 #include "BMP.h"
 
-
-#undef EPS
-#include "opencv2/core/core.hpp"
-#include "opencv2/objdetect/objdetect.hpp"
-//#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#define EPS		192
-
 using namespace std;
+using namespace cv;
+
+cv::Mat* img1;
 
 const int SIOD = 22; //SDA
 const int SIOC = 23; //SCL
@@ -68,11 +71,16 @@ unsigned char bmpHeader[BMP::headerSize];
 
 // Global variables
 // Copy this file from opencv/data/haarscascades to target folder
-string face_cascade_name = "c:/haarcascade_frontalface_alt.xml";
-cv::CascadeClassifier face_cascade;
-string window_name = "Capture - Face detection";
+std::string face_cascade_name = "c:/haarcascade_frontalface_alt.xml";
+//cv::CascadeClassifier face_cascade;
+std::string window_name = "Capture - Face detection";
 int filenumber; // Number of file to be saved
-string filename;
+std::string filename;
+
+static bool endsWith(const std::string& str, const std::string& suffix)
+{
+    return str.size() >= suffix.size() && 0 == str.compare(str.size()-suffix.size(), suffix.size(), suffix);
+}
 
 void serve()
 {
@@ -80,7 +88,7 @@ void serve()
   if (client) 
   {
     //Serial.println("New Client.");
-    String currentLine = "";
+    std::string currentLine = "";
     while (client.connected()) 
     {
       //camera->oneFrame();
@@ -112,7 +120,7 @@ void serve()
           currentLine += c;
         }
         
-        if(currentLine.endsWith("GET /camera"))
+        if(endsWith(currentLine, "GET /camera"))
         {
             client.println("HTTP/1.1 200 OK");
             client.println("Content-type:image/bmp");
@@ -135,6 +143,8 @@ void serve()
 
 void setup() 
 {
+  cv::Mat *matr;
+  matr->create(160,120,CV_8UC1);
   Serial.begin(115200);
 
   wifiMulti.addAP(ssid1, password1);

@@ -11,8 +11,8 @@ bool ClockEnable(int pin, int Hz)
     periph_module_enable(PERIPH_LEDC_MODULE);
 
     ledc_timer_config_t timer_conf;
-    timer_conf.duty_resolution = LEDC_TIMER_1_BIT;
-    //imer_conf.bit_num = (ledc_timer_bit_t)1;
+    //timer_conf.duty_resolution = LEDC_TIMER_1_BIT;
+    timer_conf.bit_num = (ledc_timer_bit_t)1;
     timer_conf.freq_hz = Hz;
     timer_conf.speed_mode = LEDC_HIGH_SPEED_MODE;
     timer_conf.timer_num = LEDC_TIMER_0;
@@ -28,7 +28,7 @@ bool ClockEnable(int pin, int Hz)
     ch_conf.duty = 1;
     ch_conf.speed_mode = LEDC_HIGH_SPEED_MODE;
     ch_conf.gpio_num = pin;
-    ch_conf.hpoint = 0;
+    //ch_conf.hpoint = 0;
     err = ledc_channel_config(&ch_conf);
     if (err != ESP_OK) {
         return false;
