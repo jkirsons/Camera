@@ -143,8 +143,7 @@ void serve()
 
 void setup() 
 {
-  cv::Mat *matr;
-  matr->create(160,120,CV_8UC1);
+  Mat mat(160, 120, cv::DataType<int>::type);
   Serial.begin(115200);
 
   wifiMulti.addAP(ssid1, password1);
