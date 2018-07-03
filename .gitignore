@@ -4,5 +4,4 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 opencv
-lib/opencv2/*
 .vscode/settings.json
