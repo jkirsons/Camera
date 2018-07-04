@@ -1,6 +1,3 @@
-
-
-
 // https://github.com/igrr/esp32-cam-demo/issues/29
 // http://web.mit.edu/6.111/www/f2015/tools/OV7670_2006.pdf
 // https://github.com/bitluni/ESP32CameraI2S
@@ -10,7 +7,11 @@
 // https://github.com/spotify/linux/blob/master/drivers/media/video/ov7670.c
 // https://github.com/torvalds/linux/blob/master/drivers/media/i2c/ov7670.c
 
+
+// https://github.com/cmmakerclub/esp32-webserver
+
 #undef EPS
+#include <unistd.h> // add to gzguts.h
 #include "opencv2/calib3d.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/core.hpp"
@@ -21,10 +22,15 @@
 #define EPS		192
 
 #include "OV7670.h"
-#include <WiFi.h>
-#include <WiFiMulti.h>
-#include <WiFiClient.h>
+//#include <WiFi.h>
+//#include <WiFiMulti.h>
+//#include <WiFiClient.h>
 #include "BMP.h"
+
+#include <stdio.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "sdkconfig.h"
 
 using namespace std;
 using namespace cv;
@@ -61,8 +67,8 @@ const int D7 = 17;
 
 OV7670 *camera;
 
-WiFiMulti wifiMulti;
-WiFiServer server(80);
+//WiFiMulti wifiMulti;
+//WiFiServer server(80);
 
 unsigned char bmpHeader[BMP::headerSize];
 
@@ -83,7 +89,7 @@ static bool endsWith(const std::string& str, const std::string& suffix)
 }
 
 void serve()
-{
+{/*
   WiFiClient client = server.available();
   if (client) 
   {
@@ -138,14 +144,25 @@ void serve()
     // close the connection:
     client.stop();
     //Serial.println("Client Disconnected.");
-  }  
+  }  */
 }
 
-void setup() 
+void loop(void *pvParameter)
+{
+  camera->oneFrame();
+  //serve();
+  //displayRGB565(camera->frame, camera->xres, camera->yres);
+}
+
+extern "C" {
+  void app_main();
+}
+
+void app_main()
 {
   Mat mat(160, 120, cv::DataType<int>::type);
-  Serial.begin(115200);
-
+//  Serial.begin(115200);
+/*
   wifiMulti.addAP(ssid1, password1);
   //wifiMulti.addAP(ssid2, password2);
   Serial.println("Connecting Wifi...");
@@ -155,17 +172,13 @@ void setup()
       Serial.println("IP address: ");
       Serial.println(WiFi.localIP());
   }
-  
+  */
   camera = new OV7670(OV7670::Mode::QQVGA_RGB565, SIOD, SIOC, VSYNC, HREF, XCLK, PCLK, D0, D1, D2, D3, D4, D5, D6, D7);
   BMP::construct16BitHeader(bmpHeader, camera->xres, camera->yres);
   
-  server.begin();
+  //server.begin();
+  xTaskCreate(&loop, "loop_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
 }
 
 
-void loop()
-{
-  camera->oneFrame();
-  serve();
-  //displayRGB565(camera->frame, camera->xres, camera->yres);
-}
+

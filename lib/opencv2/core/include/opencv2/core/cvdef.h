@@ -261,7 +261,7 @@ Cv64suf;
 # if (defined _WIN32 || defined WINCE || defined __CYGWIN__)
 #   define CV_EXPORTS __declspec(dllexport)
 # elif defined __GNUC__ && __GNUC__ >= 4
-#   define CV_EXPORTS __attribute__ ((visibility ("default")))
+//#   define CV_EXPORTS __attribute__ ((visibility ("default")))
 # endif
 #endif
 

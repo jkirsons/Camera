@@ -8,9 +8,21 @@ OV7670::OV7670(Mode m, const int SIOD, const int SIOC, const int VSYNC, const in
   ClockEnable(XCLK, 20000000); //base is 80MHz
   
   DEBUG_PRINT("Waiting for VSYNC...");  
-  pinMode(VSYNC, INPUT);
-  while(!digitalRead(VSYNC));
-  while(digitalRead(VSYNC));
+  
+  gpio_config_t io_conf;
+  io_conf.intr_type = GPIO_INTR_DISABLE;
+  io_conf.mode = GPIO_MODE_INPUT;
+  io_conf.pin_bit_mask = ((1ULL<<VSYNC));
+  io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+  io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
+  gpio_config(&io_conf);
+  
+  while(!gpio_get_level((gpio_num_t)VSYNC));
+  while(gpio_get_level((gpio_num_t)VSYNC));
+  
+  //pinMode(VSYNC, INPUT);
+  //while(!digitalRead(VSYNC));
+  //while(digitalRead(VSYNC));
   DEBUG_PRINTLN(" done");
 
   mode = m;
