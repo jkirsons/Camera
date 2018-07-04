@@ -12,8 +12,8 @@
 
 #undef EPS
 #include <unistd.h> // add to gzguts.h
-#include "opencv2/calib3d.hpp"
-#include "opencv2/imgproc.hpp"
+//#include "opencv2/calib3d.hpp"
+//#include "opencv2/imgproc.hpp"
 #include "opencv2/core.hpp"
 
 //#include "opencv2/objdetect.hpp"
@@ -160,7 +160,7 @@ extern "C" {
 
 void app_main()
 {
-  Mat mat(160, 120, cv::DataType<int>::type);
+  //Mat mat(160, 120, cv::DataType<int>::type);
 //  Serial.begin(115200);
 /*
   wifiMulti.addAP(ssid1, password1);
