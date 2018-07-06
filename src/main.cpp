@@ -28,6 +28,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "WiFiSrv.h"
 
 using namespace cv;
 
@@ -162,6 +163,7 @@ void app_main()
   camera = new OV7670(OV7670::Mode::QQVGA_RGB565, SIOD, SIOC, VSYNC, HREF, XCLK, PCLK, D0, D1, D2, D3, D4, D5, D6, D7);
   BMP::construct16BitHeader(bmpHeader, camera->xres, camera->yres);
   
+  WiFiSrv();
   //server.begin();
   xTaskCreate(&loop, "loop_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
 }
