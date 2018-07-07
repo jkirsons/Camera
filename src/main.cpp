@@ -26,9 +26,11 @@
 //#include <WiFiClient.h>
 #include "BMP.h"
 
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "WiFiSrv.h"
+#include "esp_log.h"
 
 using namespace cv;
 
@@ -38,13 +40,13 @@ const int SIOC = 23; //SCL
 const int VSYNC = 21;
 const int HREF = 19;
 
-const int XCLK = 5;
+const int XCLK = 25;
 const int PCLK = 18;
 
 const int D0 = 14;
 const int D1 = 12;
 const int D2 = 15;
-const int D3 = 2;
+const int D3 = 32;
 const int D4 = 27;
 const int D5 = 4;
 const int D6 = 16;
@@ -59,13 +61,55 @@ const int D7 = 17;
 #define password1    "Stephen123"
 //#define ssid2        ""
 //#define password2    ""
-
+    wifi_config_t sta_config = {
+        {
+            "Tomato24",
+            "Stephen123",
+            false
+        }
+    };
+    
 OV7670 *camera;
 unsigned char bmpHeader[BMP::headerSize];
 
 static bool endsWith(const std::string& str, const std::string& suffix)
 {
     return str.size() >= suffix.size() && 0 == str.compare(str.size()-suffix.size(), suffix.size(), suffix);
+}
+
+
+void http_server_netconn_serve(struct netconn *conn)
+{
+  struct netbuf *inbuf;
+  char *buf;
+  u16_t buflen;
+  err_t err;
+  char http_index_hml[] = "test";
+
+  /* Read the data from the port, blocking if nothing yet there.
+   We assume the request (the part we care about) is in one netbuf */
+  err = netconn_recv(conn, &inbuf);
+  if (err == ERR_OK) {
+    netbuf_data(inbuf, (void**)&buf, &buflen);
+    // strncpy(_mBuffer, buf, buflen);
+    
+    printf("buffer = %s \n", buf);
+    if (buflen>=5 && buf[0]=='G' && buf[1]=='E' && buf[2]=='T' && buf[3]==' ' && buf[4]=='/' ) {
+      printf("buf[5] = %c\n", buf[5]);
+      netconn_write(conn, http_html_hdr, sizeof(http_html_hdr)-1, NETCONN_NOCOPY);
+
+      if(buf[5]=='j') {
+    	  //netconn_write(conn, json_unformatted, strlen(json_unformatted), NETCONN_NOCOPY);
+      }
+      else {
+          netconn_write(conn, http_index_hml, sizeof(http_index_hml)-1, NETCONN_NOCOPY);
+      }
+    }
+
+  }
+  /* Close the connection (server closes in HTTP) */
+  netconn_close(conn);
+  netbuf_delete(inbuf);
 }
 
 /*
@@ -136,6 +180,8 @@ void loop(void *pvParameter)
 //void loop()
 {
   camera->oneFrame();
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  ESP_LOGI("loop", "Frame Captured");
   //serve();
 }
 
@@ -163,7 +209,7 @@ void app_main()
   camera = new OV7670(OV7670::Mode::QQVGA_RGB565, SIOD, SIOC, VSYNC, HREF, XCLK, PCLK, D0, D1, D2, D3, D4, D5, D6, D7);
   BMP::construct16BitHeader(bmpHeader, camera->xres, camera->yres);
   
-  WiFiSrv();
+  WiFiSrv(sta_config);
   //server.begin();
   xTaskCreate(&loop, "loop_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
 }

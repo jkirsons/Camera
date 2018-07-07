@@ -30,7 +30,7 @@ esp_err_t event_handler(void *ctx, system_event_t *event)
     return ESP_OK;
 }
 
-void initialise_wifi(void)
+void initialise_wifi(wifi_config_t sta_config)
 {
     tcpip_adapter_init();
     wifi_event_group = xEventGroupCreate();
@@ -39,64 +39,13 @@ void initialise_wifi(void)
     ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
     ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
     ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
-    wifi_config_t sta_config = {
-        {
-            "Nat",
-            "123456789",
-            false
-        }
-    };
-
     ESP_ERROR_CHECK( esp_wifi_set_config(WIFI_IF_STA, &sta_config) );
     ESP_ERROR_CHECK( esp_wifi_start() );
 }
 
-void http_server_netconn_serve(struct netconn *conn)
-{
-  struct netbuf *inbuf;
-  char *buf;
-  u16_t buflen;
-  err_t err;
-
-  /* Read the data from the port, blocking if nothing yet there.
-   We assume the request (the part we care about) is in one netbuf */
-  err = netconn_recv(conn, &inbuf);
-
-  if (err == ERR_OK) {
-    netbuf_data(inbuf, (void**)&buf, &buflen);
-    // strncpy(_mBuffer, buf, buflen);
-    
-    printf("buffer = %s \n", buf);
-    if (buflen>=5 && buf[0]=='G' && buf[1]=='E' && buf[2]=='T' && buf[3]==' ' && buf[4]=='/' ) {
-      printf("buf[5] = %c\n", buf[5]);
-      netconn_write(conn, http_html_hdr, sizeof(http_html_hdr)-1, NETCONN_NOCOPY);
-
-      if(buf[5]=='h') {
-        //gpio_set_level(LED_BUILTIN, 0);
-        /* Send our HTML page */
-        netconn_write(conn, http_index_hml, sizeof(http_index_hml)-1, NETCONN_NOCOPY);
-      }
-      else if(buf[5]=='l') {
-        //gpio_set_level(LED_BUILTIN, 1);
-        /* Send our HTML page */
-        netconn_write(conn, http_index_hml, sizeof(http_index_hml)-1, NETCONN_NOCOPY);
-      }
-      else if(buf[5]=='j') {
-    	  netconn_write(conn, json_unformatted, strlen(json_unformatted), NETCONN_NOCOPY);
-      }
-      else {
-          netconn_write(conn, http_index_hml, sizeof(http_index_hml)-1, NETCONN_NOCOPY);
-      }
-    }
-
-  }
-  /* Close the connection (server closes in HTTP) */
-  netconn_close(conn);
-  netbuf_delete(inbuf);
-}
-
 void http_server(void *pvParameters)
 {
+  ESP_LOGI("http", "Begin Server Loop");    
   struct netconn *conn, *newconn;
   err_t err;
   conn = netconn_new(NETCONN_TCP);
@@ -108,53 +57,16 @@ void http_server(void *pvParameters)
        http_server_netconn_serve(newconn);
        netconn_delete(newconn);
      }
+     vTaskDelay(100 / portTICK_PERIOD_MS);
    } while(err == ERR_OK);
    netconn_close(conn);
    netconn_delete(conn);
+   ESP_LOGI("http", "End Server Loop");    
+  
 }
 
-
-void generate_json(void *pvParameters) {
-	cJSON *root, *info, *d;
-	root = cJSON_CreateObject();
-
-	cJSON_AddItemToObject(root, "d", d = cJSON_CreateObject());
-	cJSON_AddItemToObject(root, "info", info = cJSON_CreateObject());
-
-	cJSON_AddStringToObject(d, "myName", "CMMC-ESP32-NANO");
-	cJSON_AddNumberToObject(d, "temperature", 30.100);
-	cJSON_AddNumberToObject(d, "humidity", 70.123);
-
-	cJSON_AddStringToObject(info, "ssid", "dummy");
-	cJSON_AddNumberToObject(info, "heap", esp_get_free_heap_size());
-
-	while (1) {
-		cJSON_ReplaceItemInObject(info, "heap",
-				cJSON_CreateNumber(esp_get_free_heap_size()));
-
-
-		json_unformatted = cJSON_PrintUnformatted(root);
-		printf("[len = %d]  ", strlen(json_unformatted));
-
-		for (int var = 0; var < strlen(json_unformatted); ++var) {
-			putc(json_unformatted[var], stdout);
-		}
-
-		printf("\n");
-		fflush(stdout);
-		delay(2000);
-		free(json_unformatted);
-	}
-}
-
-void WiFiSrv() {
-    nvs_flash_init();
-    initialise_wifi();
-
-    gpio_pad_select_gpio(LED_BUILTIN);
-
-    /* Set the GPIO as a push/pull output */
-    gpio_set_direction((gpio_num_t)LED_BUILTIN, GPIO_MODE_OUTPUT);
-    xTaskCreate(generate_json, "json", 2048, NULL, 5, NULL);
+void WiFiSrv(wifi_config_t sta_config) {
+    //nvs_flash_init();
+    initialise_wifi(sta_config);
     xTaskCreate(http_server, "http_server", 2048, NULL, 5, NULL);
 }
