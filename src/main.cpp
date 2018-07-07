@@ -57,17 +57,11 @@ const int D7 = 17;
 //DIN <- MOSI 23
 //CLK <- SCK 18
 
-#define ssid1        "Tomato24"
+#define ssid1       "Tomato24"
 #define password1    "Stephen123"
 //#define ssid2        ""
 //#define password2    ""
-    wifi_config_t sta_config = {
-        {
-            "Tomato24",
-            "Stephen123",
-            false
-        }
-    };
+
     
 OV7670 *camera;
 unsigned char bmpHeader[BMP::headerSize];
@@ -209,6 +203,9 @@ void app_main()
   camera = new OV7670(OV7670::Mode::QQVGA_RGB565, SIOD, SIOC, VSYNC, HREF, XCLK, PCLK, D0, D1, D2, D3, D4, D5, D6, D7);
   BMP::construct16BitHeader(bmpHeader, camera->xres, camera->yres);
   
+  wifi_config_t sta_config;
+  sta_config.sta.ssid = "Tomato24",
+  sta_config.sta.password = "Stephen123";
   WiFiSrv(sta_config);
   //server.begin();
   xTaskCreate(&loop, "loop_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
