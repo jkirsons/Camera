@@ -7,7 +7,6 @@
 // https://github.com/spotify/linux/blob/master/drivers/media/video/ov7670.c
 // https://github.com/torvalds/linux/blob/master/drivers/media/i2c/ov7670.c
 
-
 // https://github.com/cmmakerclub/esp32-webserver
 
 #undef EPS
@@ -18,14 +17,13 @@
 //#include "opencv2/objdetect.hpp"
 //#include "opencv2/highgui/highgui.hpp"
 //#include "opencv2/imgproc.hpp"
-#define EPS		192
- 
+#define EPS 192
+
 #include "OV7670.h"
 //#include <WiFi.h>
 //#include <WiFiMulti.h>
 //#include <WiFiClient.h>
 #include "BMP.h"
-
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -52,25 +50,11 @@ const int D5 = 4;
 const int D6 = 16;
 const int D7 = 17;
 
-//const int TFT_DC = 2;
-//const int TFT_CS = 5;
-//DIN <- MOSI 23
-//CLK <- SCK 18
+#define ssid1 "Tomato24"
+#define password1 "Stephen123"
 
-#define ssid1       "Tomato24"
-#define password1    "Stephen123"
-//#define ssid2        ""
-//#define password2    ""
-
-    
 OV7670 *camera;
 unsigned char bmpHeader[BMP::headerSize];
-
-static bool endsWith(const std::string& str, const std::string& suffix)
-{
-    return str.size() >= suffix.size() && 0 == str.compare(str.size()-suffix.size(), suffix.size(), suffix);
-}
-
 
 void http_server_netconn_serve(struct netconn *conn)
 {
@@ -78,28 +62,31 @@ void http_server_netconn_serve(struct netconn *conn)
   char *buf;
   u16_t buflen;
   err_t err;
-  char http_index_hml[] = "test";
+  char http_index_hml[] = "<style>body{margin: 0}\nimg{height: 100%; width: auto}</style>"
+                          "<img id='a' src='/camera' onload='this.style.display=\"initial\"; var b = document.getElementById(\"b\"); b.style.display=\"none\"; b.src=\"camera?\"+Date.now(); '>"
+                          "<img id='b' style='display: none' src='/camera' onload='this.style.display=\"initial\"; var a = document.getElementById(\"a\"); a.style.display=\"none\"; a.src=\"camera?\"+Date.now(); '>\n";
 
   /* Read the data from the port, blocking if nothing yet there.
    We assume the request (the part we care about) is in one netbuf */
   err = netconn_recv(conn, &inbuf);
-  if (err == ERR_OK) {
-    netbuf_data(inbuf, (void**)&buf, &buflen);
-    // strncpy(_mBuffer, buf, buflen);
-    
+  if (err == ERR_OK)
+  {
+    netbuf_data(inbuf, (void **)&buf, &buflen);
     printf("buffer = %s \n", buf);
-    if (buflen>=5 && buf[0]=='G' && buf[1]=='E' && buf[2]=='T' && buf[3]==' ' && buf[4]=='/' ) {
-      printf("buf[5] = %c\n", buf[5]);
-      netconn_write(conn, http_html_hdr, sizeof(http_html_hdr)-1, NETCONN_NOCOPY);
-
-      if(buf[5]=='j') {
-    	  //netconn_write(conn, json_unformatted, strlen(json_unformatted), NETCONN_NOCOPY);
+    if (buflen >= 5 && buf[0] == 'G' && buf[1] == 'E' && buf[2] == 'T' && buf[3] == ' ' && buf[4] == '/')
+    {
+      netconn_write(conn, http_html_hdr, sizeof(http_html_hdr) - 1, NETCONN_NOCOPY);
+      if (buf[5] == 'c')
+      {
+        //netconn_write(conn, json_unformatted, strlen(json_unformatted), NETCONN_NOCOPY);
+        netconn_write(conn, (const uint8_t *)(bmpHeader), (size_t)(BMP::headerSize), NETCONN_NOCOPY);
+        netconn_write(conn, (const uint8_t *)(camera->frame), (size_t)(camera->xres * camera->yres * 2), NETCONN_NOCOPY);
       }
-      else {
-          netconn_write(conn, http_index_hml, sizeof(http_index_hml)-1, NETCONN_NOCOPY);
+      else
+      {
+        netconn_write(conn, http_index_hml, sizeof(http_index_hml) - 1, NETCONN_NOCOPY);
       }
     }
-
   }
   /* Close the connection (server closes in HTTP) */
   netconn_close(conn);
@@ -109,6 +96,11 @@ void http_server_netconn_serve(struct netconn *conn)
 /*
 WiFiMulti wifiMulti;
 WiFiServer server(80);
+
+static bool endsWith(const std::string &str, const std::string &suffix)
+{
+  return str.size() >= suffix.size() && 0 == str.compare(str.size() - suffix.size(), suffix.size(), suffix);
+}
 
 void serve()
 {
@@ -179,7 +171,8 @@ void loop(void *pvParameter)
   //serve();
 }
 
-extern "C" {
+extern "C"
+{
   void app_main();
 }
 
@@ -187,7 +180,7 @@ void app_main()
 //void setup()
 {
   Mat mat(160, 120, cv::DataType<int>::type);
-/*  
+  /*  
   Serial.begin(115200);
 
   wifiMulti.addAP(ssid1, password1);
@@ -199,17 +192,14 @@ void app_main()
       Serial.println("IP address: ");
       Serial.println(WiFi.localIP());
   }
-*/  
+*/
   camera = new OV7670(OV7670::Mode::QQVGA_RGB565, SIOD, SIOC, VSYNC, HREF, XCLK, PCLK, D0, D1, D2, D3, D4, D5, D6, D7);
   BMP::construct16BitHeader(bmpHeader, camera->xres, camera->yres);
-  
+
   wifi_config_t sta_config;
-  sta_config.sta.ssid = "Tomato24",
-  sta_config.sta.password = "Stephen123";
+  memmove(sta_config.sta.ssid, ssid1, sizeof(sta_config.sta.ssid));
+  memmove(sta_config.sta.password, password1, sizeof(sta_config.sta.password));
   WiFiSrv(sta_config);
   //server.begin();
   xTaskCreate(&loop, "loop_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
 }
-
-
-
