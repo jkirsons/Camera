@@ -1,0 +1,1 @@
+decoder.py -s -p ESP32 -t ~\.platformio\packages\toolchain-xtensa32 -e C:\Users\Jason\Documents\PlatformIO\Projects\Camera\.pioenvs\featheresp32\firmware.elf -f stack 

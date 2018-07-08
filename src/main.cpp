@@ -10,24 +10,24 @@
 // https://github.com/cmmakerclub/esp32-webserver
 
 #undef EPS
-//#include "opencv2/core/calib3d.hpp"
-//#include "opencv2/core/imgproc.hpp"
+//#include "opencv2/calib3d/calib3d.hpp"
+#include "opencv2/core/opencl/ocl_defs.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/core/core.hpp"
-
-//#include "opencv2/objdetect.hpp"
+#include "opencv2/objdetect/objdetect.hpp"
 //#include "opencv2/highgui/highgui.hpp"
 //#include "opencv2/imgproc.hpp"
 #define EPS 192
 
 #include "OV7670.h"
-//#include <WiFi.h>
-//#include <WiFiMulti.h>
-//#include <WiFiClient.h>
+#include <WiFi.h>
+#include <WiFiMulti.h>
+#include <WiFiClient.h>
 #include "BMP.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "WiFiSrv.h"
+//#include "freertos/FreeRTOS.h"
+//#include "freertos/task.h"
+//#include "WiFiSrv.h"
 #include "esp_log.h"
 
 using namespace cv;
@@ -55,7 +55,7 @@ const int D7 = 17;
 
 OV7670 *camera;
 unsigned char bmpHeader[BMP::headerSize];
-
+/*
 void http_server_netconn_serve(struct netconn *conn)
 {
   struct netbuf *inbuf;
@@ -66,13 +66,13 @@ void http_server_netconn_serve(struct netconn *conn)
                           "<img id='a' src='/camera' onload='this.style.display=\"initial\"; var b = document.getElementById(\"b\"); b.style.display=\"none\"; b.src=\"camera?\"+Date.now(); '>"
                           "<img id='b' style='display: none' src='/camera' onload='this.style.display=\"initial\"; var a = document.getElementById(\"a\"); a.style.display=\"none\"; a.src=\"camera?\"+Date.now(); '>\n";
 
-  /* Read the data from the port, blocking if nothing yet there.
-   We assume the request (the part we care about) is in one netbuf */
+  // Read the data from the port, blocking if nothing yet there.
+  // We assume the request (the part we care about) is in one netbuf 
   err = netconn_recv(conn, &inbuf);
   if (err == ERR_OK)
   {
     netbuf_data(inbuf, (void **)&buf, &buflen);
-    printf("buffer = %s \n", buf);
+    //printf("buffer = %s \n", buf);
     if (buflen >= 5 && buf[0] == 'G' && buf[1] == 'E' && buf[2] == 'T' && buf[3] == ' ' && buf[4] == '/')
     {
       netconn_write(conn, http_html_hdr, sizeof(http_html_hdr) - 1, NETCONN_NOCOPY);
@@ -88,12 +88,16 @@ void http_server_netconn_serve(struct netconn *conn)
       }
     }
   }
-  /* Close the connection (server closes in HTTP) */
+  // Close the connection (server closes in HTTP) 
   netconn_close(conn);
   netbuf_delete(inbuf);
 }
+*/
 
-/*
+std::string cascadeName;
+std::string nestedCascadeName;
+cv::CascadeClassifier cascade, nestedCascade;
+
 WiFiMulti wifiMulti;
 WiFiServer server(80);
 
@@ -160,29 +164,37 @@ void serve()
     //Serial.println("Client Disconnected.");
   }  
 }
-*/
 
-void loop(void *pvParameter)
-//void loop()
+
+//void loop(void *pvParameter)
+void loop()
 {
   camera->oneFrame();
-  vTaskDelay(100 / portTICK_PERIOD_MS);
-  ESP_LOGI("loop", "Frame Captured");
-  //serve();
+  //vTaskDelay(100 / portTICK_PERIOD_MS);
+  //ESP_LOGI("loop", "Frame Captured");
+  serve();
 }
-
+/*
 extern "C"
 {
   void app_main();
 }
-
-void app_main()
-//void setup()
+*/
+//void app_main()
+void setup()
 {
-  Mat mat(160, 120, cv::DataType<int>::type);
-  /*  
   Serial.begin(115200);
+  
+  //Mat mat(160, 120, cv::DataType<int>::type);
+  //if ( !nestedCascade.load( "nestedCascadeName" ) )
+    Serial.println("WARNING: Could not load classifier cascade for nested objects");
+  //if( !cascade.load( "cascadeName" ) )
+  //{
+    Serial.println("ERROR: Could not load classifier cascade");
+  //}
 
+  HOGDescriptor hd;
+  
   wifiMulti.addAP(ssid1, password1);
   //wifiMulti.addAP(ssid2, password2);
   Serial.println("Connecting Wifi...");
@@ -192,14 +204,15 @@ void app_main()
       Serial.println("IP address: ");
       Serial.println(WiFi.localIP());
   }
-*/
+
   camera = new OV7670(OV7670::Mode::QQVGA_RGB565, SIOD, SIOC, VSYNC, HREF, XCLK, PCLK, D0, D1, D2, D3, D4, D5, D6, D7);
   BMP::construct16BitHeader(bmpHeader, camera->xres, camera->yres);
-
+/*
   wifi_config_t sta_config;
   memmove(sta_config.sta.ssid, ssid1, sizeof(sta_config.sta.ssid));
   memmove(sta_config.sta.password, password1, sizeof(sta_config.sta.password));
   WiFiSrv(sta_config);
-  //server.begin();
-  xTaskCreate(&loop, "loop_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
+*/  
+  server.begin();
+  //xTaskCreate(&loop, "loop_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
 }

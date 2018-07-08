@@ -45,28 +45,29 @@ void initialise_wifi(wifi_config_t sta_config)
 
 void http_server(void *pvParameters)
 {
-  ESP_LOGI("http", "Begin Server Loop");    
+  //ESP_LOGI("http", "Begin Server Loop");    
   struct netconn *conn, *newconn;
   err_t err;
   conn = netconn_new(NETCONN_TCP);
-  netconn_bind(conn, NULL, 80);
-  netconn_listen(conn);
+  ESP_ERROR_CHECK( netconn_bind(conn, NULL, 80) );
+  ESP_ERROR_CHECK( netconn_listen(conn) );
   do {
      err = netconn_accept(conn, &newconn);
      if (err == ERR_OK) {
        http_server_netconn_serve(newconn);
-       netconn_delete(newconn);
+       ESP_ERROR_CHECK( netconn_delete(newconn) );
      }
      vTaskDelay(100 / portTICK_PERIOD_MS);
    } while(err == ERR_OK);
-   netconn_close(conn);
-   netconn_delete(conn);
-   ESP_LOGI("http", "End Server Loop");    
+   ESP_ERROR_CHECK( netconn_close(conn) );
+   ESP_ERROR_CHECK( netconn_delete(conn) );
+   //ESP_LOGI("http", "End Server Loop");    
   
 }
 
 void WiFiSrv(wifi_config_t sta_config) {
-    //nvs_flash_init();
+    esp_log_level_set("*", ESP_LOG_VERBOSE);
+    ESP_ERROR_CHECK( nvs_flash_init() );
     initialise_wifi(sta_config);
     xTaskCreate(http_server, "http_server", 2048, NULL, 5, NULL);
 }
