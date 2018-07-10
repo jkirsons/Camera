@@ -10,7 +10,7 @@
 // https://github.com/cmmakerclub/esp32-webserver
 
 #undef EPS
-//#include "opencv2/calib3d/calib3d.hpp"
+#include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/core/opencl/ocl_defs.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/core/core.hpp"
@@ -93,10 +93,6 @@ void http_server_netconn_serve(struct netconn *conn)
   netbuf_delete(inbuf);
 }
 */
-
-std::string cascadeName;
-std::string nestedCascadeName;
-cv::CascadeClassifier cascade, nestedCascade;
 
 WiFiMulti wifiMulti;
 WiFiServer server(80);
@@ -184,17 +180,20 @@ extern "C"
 void setup()
 {
   Serial.begin(115200);
-  
-  //Mat mat(160, 120, cv::DataType<int>::type);
-  //if ( !nestedCascade.load( "nestedCascadeName" ) )
-    Serial.println("WARNING: Could not load classifier cascade for nested objects");
-  //if( !cascade.load( "cascadeName" ) )
-  //{
-    Serial.println("ERROR: Could not load classifier cascade");
-  //}
 
-  HOGDescriptor hd;
-  
+  int max_disp = 160;
+  int wsize = 21;
+  Ptr<StereoBM> left_matcher = StereoBM::create(max_disp,wsize);
+  Ptr<cv::ximgproc::DisparityWLSFilter> wls_filter = cv::imgproc::createDisparityWLSFilter(left_matcher);
+  Ptr<StereoMatcher> right_matcher = createRightMatcher(left_matcher);
+  cvtColor(left_for_matcher,  left_for_matcher,  COLOR_BGR2GRAY);
+  cvtColor(right_for_matcher, right_for_matcher, COLOR_BGR2GRAY);
+  matching_time = (double)getTickCount();
+  left_matcher-> compute(left_for_matcher, right_for_matcher,left_disp);
+  right_matcher->compute(right_for_matcher,left_for_matcher, right_disp);
+  matching_time = ((double)getTickCount() - matching_time)/getTickFrequency();
+
+
   wifiMulti.addAP(ssid1, password1);
   //wifiMulti.addAP(ssid2, password2);
   Serial.println("Connecting Wifi...");
