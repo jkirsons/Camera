@@ -13,6 +13,7 @@
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/core/opencl/ocl_defs.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/ximgproc.hpp"
 #include "opencv2/core/core.hpp"
 #include "opencv2/objdetect/objdetect.hpp"
 //#include "opencv2/highgui/highgui.hpp"
@@ -180,19 +181,19 @@ extern "C"
 void setup()
 {
   Serial.begin(115200);
-
+  Mat left_for_matcher, right_for_matcher;
+  Mat left_disp,right_disp;
+  Mat filtered_disp;
   int max_disp = 160;
   int wsize = 21;
   Ptr<StereoBM> left_matcher = StereoBM::create(max_disp,wsize);
-  Ptr<cv::ximgproc::DisparityWLSFilter> wls_filter = cv::imgproc::createDisparityWLSFilter(left_matcher);
-  Ptr<StereoMatcher> right_matcher = createRightMatcher(left_matcher);
+  Ptr<cv::ximgproc::DisparityWLSFilter> wls_filter = cv::ximgproc::createDisparityWLSFilter(left_matcher);
+  Ptr<StereoMatcher> right_matcher = cv::ximgproc::createRightMatcher(left_matcher);
   cvtColor(left_for_matcher,  left_for_matcher,  COLOR_BGR2GRAY);
   cvtColor(right_for_matcher, right_for_matcher, COLOR_BGR2GRAY);
-  matching_time = (double)getTickCount();
   left_matcher-> compute(left_for_matcher, right_for_matcher,left_disp);
   right_matcher->compute(right_for_matcher,left_for_matcher, right_disp);
-  matching_time = ((double)getTickCount() - matching_time)/getTickFrequency();
-
+  
 
   wifiMulti.addAP(ssid1, password1);
   //wifiMulti.addAP(ssid2, password2);
