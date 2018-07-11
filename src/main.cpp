@@ -181,7 +181,11 @@ extern "C"
 void setup()
 {
   Serial.begin(115200);
-  Mat left_for_matcher, right_for_matcher;
+  
+  Mat right_for_matcher;
+  Mat left_for_matcher = Mat(camera->xres, camera->yres,	CV_8UC1, camera->frame, 1);
+  
+
   Mat left_disp,right_disp;
   Mat filtered_disp;
   int max_disp = 160;
