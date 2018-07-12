@@ -151,7 +151,7 @@ void serve()
             //for(int i = 0; i < camera->xres * camera->yres * 2; i++)
             //   client.write(camera->frame[i]);
             client.write((const uint8_t*)(bmpHeader), (size_t)(BMP::headerSize));
-            client.write((const uint8_t*)(camera->frame), (size_t)(camera->xres * camera->yres * 2));
+            client.write((const uint8_t*)(camera->frame), (size_t)(camera->xres * camera->yres/* * 2*/));
             
         }
       }
@@ -181,10 +181,10 @@ extern "C"
 void setup()
 {
   Serial.begin(115200);
-  
+    
   Mat right_for_matcher;
   Mat left_for_matcher = Mat(camera->xres, camera->yres,	CV_8UC1, camera->frame, 1);
-  
+/*
 
   Mat left_disp,right_disp;
   Mat filtered_disp;
@@ -197,7 +197,7 @@ void setup()
   cvtColor(right_for_matcher, right_for_matcher, COLOR_BGR2GRAY);
   left_matcher-> compute(left_for_matcher, right_for_matcher,left_disp);
   right_matcher->compute(right_for_matcher,left_for_matcher, right_disp);
-  
+  */
 
   wifiMulti.addAP(ssid1, password1);
   //wifiMulti.addAP(ssid2, password2);

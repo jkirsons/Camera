@@ -128,11 +128,8 @@ void OV7670::QQQVGA()
 void OV7670::QQVGA()
 {
   //160x120 (1/4)
-  //i2c.writeRegister(ADDR, REG_CLKRC, 0x01);
   i2c.writeRegister(ADDR, REG_COM3, 0x04);  //DCW enable
-  
   i2c.writeRegister(ADDR, REG_COM14, 0x1a); //pixel clock divided by 4, manual scaling enable, DCW and PCLK controlled by register
-  //i2c.writeRegister(ADDR, REG_COM14, 0x0);
   
   i2c.writeRegister(ADDR, REG_SCALING_XSC, 0x3a);
   i2c.writeRegister(ADDR, REG_SCALING_YSC, 0x35);
@@ -144,32 +141,23 @@ void OV7670::QQVGA()
   
 void OV7670::QQVGARGB565()
 {
-  i2c.writeRegister(ADDR, REG_COM7, 0b10000000);  //all registers default
-  //i2c.writeRegister(ADDR, REG_RGB444, 0); 
-  //i2c.writeRegister(ADDR, REG_COM1, 0);   
+  i2c.writeRegister(ADDR, REG_COM7, 0b10000000);  //all registers default 
       
   i2c.writeRegister(ADDR, REG_CLKRC, 0b10000000); //double clock
   i2c.writeRegister(ADDR, REG_COM11, 0b1000 | 0b10); //enable auto 50/60Hz detect + exposure timing can be less...
 
-  i2c.writeRegister(ADDR, REG_COM7, 0b100); //RGB
-  i2c.writeRegister(ADDR, REG_COM15, 0b11000000 | 0b00010000); //RGB565
- 
+  i2c.writeRegister(ADDR, REG_COM7, 0b000); //YUV
+  i2c.writeRegister(ADDR, REG_COM15, 0b11000000 | 0b00000000); //RGB565
+  i2c.writeRegister(ADDR, REG_COM13, 0b11000000 );
+  i2c.writeRegister(ADDR, REG_TSLB,  0b00000000 );
   QQVGA();
 
   frameControl(196, 52, 8, 488); //no clue why horizontal needs such strange values, vertical works ok
-  /*
-  i2c.writeRegister(ADDR, REG_HSTART, 0x13);
-  i2c.writeRegister(ADDR, REG_HSTOP,  0x01);
-  i2c.writeRegister(ADDR, REG_HREF,   0xb6);
-  i2c.writeRegister(ADDR, REG_VSTART, 0x02);
-  i2c.writeRegister(ADDR, REG_VSTOP,  0x7a);
-  i2c.writeRegister(ADDR, REG_VREF,   0x0a);
-*/
 
   //i2c.writeRegister(ADDR, REG_COM10, 0x02); //VSYNC negative
   //i2c.writeRegister(ADDR, REG_MVFP, 0x2b);  //mirror flip
 
-  i2c.writeRegister(ADDR, 0xb0, 0x84);// no clue what this is but it's most important for colors
+  //i2c.writeRegister(ADDR, 0xb0, 0x84);// no clue what this is but it's most important for colors
   saturation(0);
   i2c.writeRegister(ADDR, 0x13, 0xe7); //AWB on
   i2c.writeRegister(ADDR, 0x6f, 0x9f); // Simple AWB

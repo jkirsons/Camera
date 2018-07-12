@@ -31,7 +31,7 @@ void IRAM_ATTR I2SCamera::i2sInterrupt(void* arg)
       for(int i = 0; i < xres * 4; i += 4)
       {
         frame[framePointer++] = buf[i + 2];
-        frame[framePointer++] = buf[i];
+        //frame[framePointer++] = buf[i];
       }
     if (blocksReceived == yres)
     {
@@ -113,7 +113,7 @@ bool I2SCamera::init(const int XRES, const int YRES, const int VSYNC, const int 
 {
   xres = XRES;
   yres = YRES;
-  frameBytes = XRES * YRES * 2;
+  frameBytes = XRES * YRES;// * 2;
   //frame = (unsigned char*)malloc(frameBytes);
   frame = (unsigned char*)heap_caps_malloc(frameBytes, MALLOC_CAP_8BIT | MALLOC_CAP_DMA);
   if(!frame)
